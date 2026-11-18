@@ -1,0 +1,15 @@
+/* ChordForge – stile comune */
+.cf-nav { display:flex; flex-wrap:wrap; align-items:center; gap:4px 18px; padding:10px 16px; background:#1d1d1f; color:#fff; font-family:-apple-system,"Helvetica Neue",Arial,sans-serif; }
+.cf-nav .brand { font-weight:900; font-size:19px; letter-spacing:.02em; margin-right:10px; color:#fff; text-decoration:none; }
+.cf-nav .brand span { color:#f5a524; }
+.cf-nav a.lnk { color:#ddd; text-decoration:none; font-size:15px; padding:4px 2px; border-bottom:2px solid transparent; }
+.cf-nav a.lnk:hover { color:#fff; }
+.cf-nav a.lnk.on { color:#fff; border-bottom-color:#f5a524; }
+.cf-wrap { max-width:1000px; margin:20px auto; padding:0 16px; font-family:-apple-system,"Helvetica Neue",Arial,sans-serif; color:#111; }
+.cf-card { background:#fff; border-radius:8px; padding:16px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.cf-seg { display:inline-flex; border:1.5px solid #111; border-radius:6px; overflow:hidden; }
+.cf-seg button { border:0; background:#fff; padding:6px 12px; font-size:14px; cursor:pointer; border-right:1px solid #111; }
+.cf-seg button:last-child { border-right:0; }
+.cf-seg button.on { background:#111; color:#fff; }
+@media print { .cf-nav, .noprint { display:none !important; } .cf-card { box-shadow:none; padding:0; } }
+@media (max-width:600px){ .cf-nav { gap:4px 12px; } }

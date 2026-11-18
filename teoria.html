@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ChordForge – Teoria</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body { margin:0; background:#eee; }
+h2 { margin:0 0 8px; font-size:21px; }
+h3 { margin:14px 0 6px; font-size:16px; }
+p, li { line-height:1.5; }
+table { border-collapse:collapse; font-size:14px; }
+td, th { border:1px solid #bbb; padding:4px 9px; text-align:center; }
+th { background:#f1f1f1; }
+.tblwrap { overflow-x:auto; }
+.ctl { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; margin:8px 0 12px; }
+select { font-size:15px; padding:5px 8px; border:1.5px solid #111; border-radius:6px; background:#fff; }
+#fb { overflow-x:auto; }
+#fb svg text { font-family:-apple-system,Arial,sans-serif; }
+.formula { font-family:Menlo,monospace; font-weight:700; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+.chip { border:1.5px solid #111; border-radius:6px; padding:4px 10px; font-weight:700; background:#fff; }
+.chip.root { background:#111; color:#fff; }
+.harm { display:grid; grid-template-columns:repeat(7,minmax(90px,1fr)); gap:8px; overflow-x:auto; }
+.harm a { text-decoration:none; color:#111; border:1px solid #ccc; border-radius:8px; padding:6px; text-align:center; background:#fff; display:block; }
+.harm a:hover { border-color:#111; }
+.harm .rn { font-weight:800; font-size:15px; }
+.harm .cn { font-size:17px; font-weight:800; }
+.harm .c7 { font-size:13px; color:#444; }
+.toc a { margin-right:14px; color:#111; }
+.legend span { display:inline-flex; align-items:center; gap:4px; margin-right:14px; font-size:13px; }
+.dot { width:14px; height:14px; border-radius:50%; display:inline-block; border:1.5px solid #111; }
+@media (max-width:700px){ .harm { grid-template-columns:repeat(7,90px); } }
+</style></head><body>
+<nav class="cf-nav"><a class="brand" href="index.html">Chord<span>Forge</span></a>
+  <a class="lnk" href="index.html">Spartito</a><a class="lnk" href="accordi.html">Prontuario accordi</a><a class="lnk on" href="teoria.html">Teoria</a></nav>
+<div class="cf-wrap">
+
+<div class="cf-card toc noprint">
+  <b>Indice:</b> <a href="#note">Le note</a><a href="#tastiera">Tastiera e scale</a><a href="#intervalli">Intervalli</a>
+  <a href="#accordi">Come nascono gli accordi</a><a href="#tonalita">Accordi della tonalità</a><a href="#quinte">Circolo delle quinte</a><a href="#leggere">Leggere schemi e tablature</a>
+  <span style="float:right">Notazione: <span class="cf-seg" id="nota"><button data-v="it" class="on">DO RE MI</button><button data-v="en">C D E</button></span></span>
+</div>
+
+<div class="cf-card" id="note">
+  <h2>Le note</h2>
+  <p>Le note sono 7: hanno un nome italiano e uno inglese (usato nelle sigle degli accordi).</p>
+  <div class="tblwrap"><table><tr><th>Italiano</th><td>DO</td><td>RE</td><td>MI</td><td>FA</td><td>SOL</td><td>LA</td><td>SI</td></tr>
+  <tr><th>Inglese</th><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>A</td><td>B</td></tr></table></div>
+  <p>Tra una nota e l'altra c'è un <b>tono</b> (2 tasti sulla chitarra), tranne tra <b>MI–FA</b> e <b>SI–DO</b>, dove c'è un <b>semitono</b> (1 tasto).
+  Le note intermedie si chiamano con il <b>diesis ♯</b> (alzata di un semitono) o con il <b>bemolle ♭</b> (abbassata): DO♯ e RE♭ sono lo stesso tasto.
+  In tutto le note diverse sono <b>12</b>: dopo la dodicesima si ricomincia, un'ottava più in alto (sulla chitarra: al 12° tasto).</p>
+  <h3>Accordatura standard</h3>
+  <p>Dalla corda più grave (6ª, in alto quando tieni la chitarra) alla più acuta (1ª): <b id="tuning"></b>.
+  Trucco: ogni corda si accorda al 5° tasto della corda sopra, tranne la 2ª (SI), che si accorda al 4° tasto della 3ª (SOL).</p>
+</div>
+
+<div class="cf-card" id="tastiera">
+  <h2>La tastiera e le scale</h2>
+  <div class="ctl">
+    <label>Tonica <select id="root"></select></label>
+    <label>Scala <select id="scale"></select></label>
+    <label><input type="checkbox" id="all"> mostra tutte le note</label>
+  </div>
+  <div class="chips" id="chips"></div>
+  <p id="sdesc" style="margin:4px 0 10px"></p>
+  <div id="fb"></div>
+  <div class="legend"><span><i class="dot" style="background:#111"></i>tonica</span><span><i class="dot" style="background:#fff"></i>nota della scala</span><span><i class="dot" style="background:#eee;border-color:#bbb"></i>altre note</span></div>
+  <p class="hint" style="color:#555;font-size:13px">Le corde sono disegnate come le vedi guardando la chitarra: in basso la 6ª (MI grave), in alto la 1ª (MI acuto).</p>
+</div>
+
+<div class="cf-card" id="intervalli">
+  <h2>Intervalli</h2>
+  <p>Un intervallo è la distanza tra due note. Sulla stessa corda ogni tasto vale un semitono.</p>
+  <div class="tblwrap"><table id="ivt"></table></div>
+</div>
+
+<div class="cf-card" id="accordi">
+  <h2>Come nascono gli accordi</h2>
+  <p>Un accordo è formato da almeno tre note suonate insieme. Si parte dalla <b>tonica</b> (1) e si aggiungono note prese dalla scala maggiore, contando i gradi.
+  Le formule indicano i gradi: ♭ vuol dire abbassato di un semitono, ♯ alzato. Esempio: <b>DO maggiore</b> = DO (1) + MI (3) + SOL (5); <b>DO minore</b> = DO + MI♭ + SOL.</p>
+  <div class="tblwrap"><table id="ct"></table></div>
+  <p>Gli schemi da suonare li trovi nel <a href="accordi.html">Prontuario accordi</a> (clicca il nome di un accordo).</p>
+</div>
+
+<div class="cf-card" id="tonalita">
+  <h2>Accordi della tonalità (armonizzazione)</h2>
+  <p>Costruendo un accordo su ogni nota della scala, usando solo le note della scala, si ottengono gli accordi "di casa" di una tonalità: sono quelli che si usano di più nelle canzoni.
+  I numeri romani indicano il grado: maiuscolo = maggiore, minuscolo = minore, ° = diminuito.</p>
+  <div class="ctl"><label>Tonalità <select id="key"></select></label> <span class="cf-seg" id="kmode"><button data-v="maj" class="on">Maggiore</button><button data-v="min">Minore</button></span></div>
+  <div class="harm" id="harm"></div>
+  <p id="hnote" style="font-size:14px"></p>
+  <h3>Giri di accordi famosi</h3>
+  <ul id="giri"></ul>
+</div>
+
+<div class="cf-card" id="quinte">
+  <h2>Circolo delle quinte</h2>
+  <p>Girando in senso orario si sale di una quinta (7 semitoni) e si aggiunge un ♯; in senso antiorario si aggiunge un ♭.
+  All'interno c'è la <b>relativa minore</b>, che ha le stesse note (es. DO maggiore ↔ LA minore). Le tonalità vicine sul cerchio "suonano bene" insieme.</p>
+  <div id="circle" style="text-align:center"></div>
+</div>
+
+<div class="cf-card" id="leggere">
+  <h2>Leggere schemi e tablature</h2>
+  <h3>Schema di accordo</h3>
+  <p>Le linee verticali sono le corde (a sinistra la 6ª, MI grave), quelle orizzontali i tasti. Il pallino pieno è dove metti il dito, ○ è una corda a vuoto, × una corda da non suonare.
+  Una barra indica il <b>barré</b>: un dito (di solito l'indice) preme più corde insieme. Se c'è un numero a lato (es. 5ª) lo schema parte da quel tasto.</p>
+  <h3>Tablatura</h3>
+  <p>Sei righe = sei corde (la riga in alto è la 1ª, MI acuto). I numeri dicono quale tasto premere; si leggono da sinistra a destra. Numeri uno sopra l'altro si suonano insieme.</p>
+<pre style="font-family:Menlo,monospace;background:#f6f6f6;padding:8px;border-radius:6px;overflow-x:auto">e|-----0-----0-----|
+B|---1-----1-----1-|
+G|-0-----0-----0---|   ← arpeggio di DO maggiore
+D|-----------------|
+A|-3---------------|
+E|-----------------|</pre>
+  <h3>Simboli comuni</h3>
+  <p><b>h</b> = hammer-on (si colpisce la corda con un dito della sinistra) · <b>p</b> = pull-off · <b>/</b> e <b>\</b> = slide · <b>b</b> = bending · <b>x</b> = nota stoppata · <b>PM</b> = palm mute.</p>
+</div>
+</div>
+
+<script src="chords.js"></script>
+<script>
+let nota="it"; try{ nota=localStorage.getItem("cf-nota")||"it"; }catch(e){}
+const N = n => CF.noteName(n, nota);
+const ROOT_OPTS = ["C","C#","Db","D","Eb","E","F","F#","Gb","G","Ab","A","Bb","B"];
+// scale: [offset lettera, semitoni]
+const SCALES = {
+  major:   {name:"Maggiore", desc:"La scala di riferimento: allegra e luminosa. Formula: T T S T T T S.", d:[[0,0],[1,2],[2,4],[3,5],[4,7],[5,9],[6,11]], f:"T T S T T T S"},
+  minor:   {name:"Minore naturale", desc:"Malinconica. È la scala maggiore che parte dal 6° grado (relativa). Formula: T S T T S T T.", d:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,8],[6,10]], f:"T S T T S T T"},
+  harmonic:{name:"Minore armonica", desc:"Minore naturale con il 7° grado alzato: dà il sapore 'orientale' e rende maggiore il V grado.", d:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,8],[6,11]], f:"T S T T S T½ S"},
+  melodic: {name:"Minore melodica", desc:"Minore con 6° e 7° alzati (nella forma ascendente). Molto usata nel jazz.", d:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,9],[6,11]], f:"T S T T T T S"},
+  pmaj:    {name:"Pentatonica maggiore", desc:"5 note, senza 4° e 7°: semplice e sempre 'giusta' sopra accordi maggiori (country, pop).", d:[[0,0],[1,2],[2,4],[4,7],[5,9]], f:"T T T½ T T½"},
+  pmin:    {name:"Pentatonica minore", desc:"La scala del rock e del blues: 5 note, la prima che si impara per improvvisare.", d:[[0,0],[2,3],[3,5],[4,7],[6,10]], f:"T½ T T T½ T"},
+  blues:   {name:"Blues", desc:"Pentatonica minore più la 'blue note' (♭5).", d:[[0,0],[2,3],[3,5],[4,6],[4,7],[6,10]], f:"T½ T S S T½ T"},
+  dorian:  {name:"Dorica (modo)", desc:"Minore con il 6° maggiore: suono minore ma più 'aperto' (Santana, funk).", d:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,9],[6,10]], f:"T S T T T S T"},
+  mixo:    {name:"Misolidia (modo)", desc:"Maggiore con il 7° abbassato: suono rock e blues sopra accordi di settima.", d:[[0,0],[1,2],[2,4],[3,5],[4,7],[5,9],[6,10]], f:"T T S T T S T"},
+};
+const sel = (id, opts, val) => { const s=document.getElementById(id); s.innerHTML=opts.map(([v,t])=>`<option value="${v}"${v===val?" selected":""}>${t}</option>`).join(""); return s; };
+
+function fretboard(){
+  const root=document.getElementById("root").value, sc=SCALES[document.getElementById("scale").value];
+  const all=document.getElementById("all").checked;
+  const notes=CF.spell(root, sc.d); const byPc={}; notes.forEach(n=>byPc[n.pc]=n.name);
+  const rootPc=notes[0].pc;
+  document.getElementById("chips").innerHTML = notes.map((n,i)=>`<span class="chip${i===0?" root":""}">${N(n.name)}</span>`).join("");
+  document.getElementById("sdesc").innerHTML = `<b>${sc.name}</b> · <span class="formula">${sc.f}</span> — ${sc.desc}`;
+  const OPEN=[4,11,7,2,9,4]; // dall'alto: 1ª … 6ª
+  const nf=15, fx=30, w=54, sy=36, ox=96, oy=26, W=ox+fx+w*nf+12, H=oy+sy*5+40;
+  const pref = CF.ROOTS;
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  // segni sulla tastiera
+  [3,5,7,9,15].forEach(f=>s+=`<circle cx="${ox+fx+w*(f-.5)}" cy="${oy+sy*2.5}" r="6" fill="#ddd"/>`);
+  s+=`<circle cx="${ox+fx+w*11.5}" cy="${oy+sy*1.5}" r="6" fill="#ddd"/><circle cx="${ox+fx+w*11.5}" cy="${oy+sy*3.5}" r="6" fill="#ddd"/>`;
+  for(let f=0;f<=nf;f++){ const x=ox+fx+w*f; s+=`<line x1="${x}" y1="${oy}" x2="${x}" y2="${oy+sy*5}" stroke="#111" stroke-width="${f===0?5:1.2}"/>`;
+    if(f>0) s+=`<text x="${x-w/2}" y="${oy+sy*5+26}" font-size="12" text-anchor="middle" fill="#555">${f}</text>`; }
+  for(let i=0;i<6;i++){ const y=oy+sy*i; s+=`<line x1="${ox+fx}" y1="${y}" x2="${ox+fx+w*nf}" y2="${y}" stroke="#111" stroke-width="${1+i*0.35}"/>`;
+    s+=`<text x="${ox-8}" y="${y+5}" font-size="13" text-anchor="end" font-weight="700">${i+1}ª ${N(["E","B","G","D","A","E"][i])}</text>`; }
+  for(let i=0;i<6;i++) for(let f=0;f<=nf;f++){
+    const pc=(OPEN[i]+f)%12, inS=pc in byPc;
+    if(!inS && !all) continue;
+    const x = f===0 ? ox+fx-15 : ox+fx+w*(f-.5), y=oy+sy*i;
+    const name = inS ? byPc[pc] : pref[pc];
+    const isR = pc===rootPc;
+    const fill = isR?"#111":inS?"#fff":"#eee", stroke=inS?"#111":"#bbb", col=isR?"#fff":inS?"#111":"#888";
+    s+=`<circle cx="${x}" cy="${y}" r="14" fill="${fill}" stroke="${stroke}" stroke-width="1.6"/>`;
+    const lab=N(name); s+=`<text x="${x}" y="${y+4.5}" font-size="${lab.length>3?9.5:lab.length>2?11:12}" text-anchor="middle" font-weight="700" fill="${col}">${lab}</text>`;
+  }
+  document.getElementById("fb").innerHTML = s+"</svg>";
+}
+
+function intervals(){
+  const rows=[[0,"Unisono","1","DO–DO"],[1,"Seconda minore","♭2","DO–RE♭"],[2,"Seconda maggiore","2","DO–RE"],[3,"Terza minore","♭3","DO–MI♭"],
+   [4,"Terza maggiore","3","DO–MI"],[5,"Quarta giusta","4","DO–FA"],[6,"Quarta aumentata / quinta diminuita (tritono)","♯4 / ♭5","DO–FA♯"],
+   [7,"Quinta giusta","5","DO–SOL"],[8,"Sesta minore","♭6","DO–LA♭"],[9,"Sesta maggiore","6","DO–LA"],[10,"Settima minore","♭7","DO–SI♭"],
+   [11,"Settima maggiore","7","DO–SI"],[12,"Ottava","8","DO–DO"]];
+  const tr = s => nota==="it"?s:s.replace(/DO|RE|MI|FA|SOL|LA|SI/g,m=>({DO:"C",RE:"D",MI:"E",FA:"F",SOL:"G",LA:"A",SI:"B"})[m]);
+  document.getElementById("ivt").innerHTML = `<tr><th>Semitoni (tasti)</th><th>Nome</th><th>Grado</th><th>Esempio</th></tr>`+
+    rows.map(r=>`<tr><td>${r[0]}</td><td style="text-align:left">${r[1]}</td><td><b>${r[2]}</b></td><td>${tr(r[3])}</td></tr>`).join("");
+}
+
+function chordTable(){
+  let html = `<tr><th>Accordo</th><th>Sigla (es. su DO)</th><th>Formula</th><th>Note (su DO)</th><th>Carattere</th></tr>`, g0="";
+  for (const t of CF.TYPES) {
+    if (t.g!==g0) { g0=t.g; html += `<tr><th colspan="5" style="text-align:left;background:#ddd">${t.g}</th></tr>`; }
+    html += `<tr><td style="text-align:left">${t.label}</td><td><a href="accordi.html?c=${encodeURIComponent("C"+t.suf)}"><b>${N("C")+t.suf}</b></a></td><td>${t.formula}</td>
+      <td>${CF.spell("C",t.deg).map(n=>N(n.name)).join(" ")}</td><td style="text-align:left">${t.uso}</td></tr>`;
+  }
+  document.getElementById("ct").innerHTML = html;
+}
+
+let kmode="maj";
+function harmony(){
+  const key=document.getElementById("key").value;
+  const sc = kmode==="maj" ? SCALES.major : SCALES.minor;
+  const ns = CF.spell(key, sc.d);
+  const tri = kmode==="maj" ? ["","m","m","","","m","dim"] : ["m","dim","","m","m","",""];
+  const sev = kmode==="maj" ? ["maj7","m7","m7","maj7","7","m7","m7b5"] : ["m7","m7b5","maj7","m7","m7","maj7","7"];
+  const rn  = kmode==="maj" ? ["I","ii","iii","IV","V","vi","vii°"] : ["i","ii°","III","iv","v","VI","VII"];
+  document.getElementById("harm").innerHTML = ns.map((n,i)=>`<a href="accordi.html?c=${encodeURIComponent(n.name+tri[i])}"><div class="rn">${rn[i]}</div>
+    <div class="cn">${N(n.name)}${tri[i]}</div><div class="c7">${N(n.name)}${sev[i]}</div></a>`).join("");
+  const c = i => N(ns[i].name)+tri[i];
+  if (kmode==="maj") {
+    const rel = CF.spell(key, [[5,9]])[0].name;
+    document.getElementById("hnote").innerHTML = `Relativa minore: <b>${N(rel)}m</b> (stesse note). Gli accordi più importanti sono I, IV e V: <b>${c(0)} – ${c(3)} – ${c(4)}</b>.`;
+    document.getElementById("giri").innerHTML = [
+      ["I – V – vi – IV", "il giro pop per eccellenza", [0,4,5,3]], ["I – vi – IV – V", "giro anni '50 (\"giro di DO\")", [0,5,3,4]],
+      ["vi – IV – I – V", "variante malinconica del giro pop", [5,3,0,4]], ["ii – V – I", "la cadenza del jazz", [1,4,0]],
+      ["I – IV – V", "rock'n'roll e blues", [0,3,4]] ].map(([r,d,a])=>`<li><b>${r}</b> → ${a.map(c).join(" – ")} <span style="color:#555">(${d})</span></li>`).join("");
+  } else {
+    const rel = CF.spell(key, [[2,3]])[0].name;
+    const V = CF.spell(key, [[4,7]])[0].name;
+    document.getElementById("hnote").innerHTML = `Relativa maggiore: <b>${N(rel)}</b>. Nella pratica il v grado si suona spesso <b>maggiore</b> o di settima (<b>${N(V)}</b> / <b>${N(V)}7</b>), prendendolo dalla scala minore armonica: crea più tensione verso la tonica.`;
+    document.getElementById("giri").innerHTML = [
+      ["i – VI – III – VII", "giro epico/pop minore", [0,5,2,6]], ["i – iv – v", "il minore classico", [0,3,4]],
+      ["i – VII – VI – V", "cadenza andalusa (flamenco)", [0,6,5,-1]], ["i – VI – VII", "rock minore", [0,5,6]] ]
+      .map(([r,d,a])=>`<li><b>${r}</b> → ${a.map(i=>i<0?N(V):c(i)).join(" – ")} <span style="color:#555">(${d})</span></li>`).join("");
+  }
+}
+
+function circle(){
+  const maj=["C","G","D","A","E","B","F#","Db","Ab","Eb","Bb","F"], min=["A","E","B","F#","C#","G#","D#","Bb","F","C","G","D"];
+  const acc=["","1♯","2♯","3♯","4♯","5♯","6♯ / 6♭","5♭","4♭","3♭","2♭","1♭"];
+  const S=420, c=S/2; let s=`<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" style="max-width:100%">`;
+  s+=`<circle cx="${c}" cy="${c}" r="190" fill="none" stroke="#111" stroke-width="1.5"/><circle cx="${c}" cy="${c}" r="128" fill="none" stroke="#111"/><circle cx="${c}" cy="${c}" r="72" fill="none" stroke="#bbb"/>`;
+  for(let i=0;i<12;i++){ const a=(i*30-90)*Math.PI/180, b=((i*30-105))*Math.PI/180;
+    s+=`<line x1="${c+72*Math.cos(b)}" y1="${c+72*Math.sin(b)}" x2="${c+190*Math.cos(b)}" y2="${c+190*Math.sin(b)}" stroke="#ccc"/>`;
+    s+=`<text x="${c+160*Math.cos(a)}" y="${c+160*Math.sin(a)+6}" font-size="${nota==="it"?16:18}" font-weight="800" text-anchor="middle">${N(maj[i])}</text>`;
+    s+=`<text x="${c+160*Math.cos(a)}" y="${c+160*Math.sin(a)+21}" font-size="10" text-anchor="middle" fill="#555">${acc[i]}</text>`;
+    s+=`<text x="${c+100*Math.cos(a)}" y="${c+100*Math.sin(a)+5}" font-size="13" text-anchor="middle">${N(min[i])}m</text>`; }
+  s+=`<text x="${c}" y="${c-4}" font-size="12" text-anchor="middle" fill="#555">fuori: maggiori</text><text x="${c}" y="${c+12}" font-size="12" text-anchor="middle" fill="#555">dentro: minori</text>`;
+  document.getElementById("circle").innerHTML = s+"</svg>";
+}
+
+function all(){
+  document.querySelectorAll("#nota button").forEach(b=>b.classList.toggle("on", b.dataset.v===nota));
+  document.querySelectorAll("#kmode button").forEach(b=>b.classList.toggle("on", b.dataset.v===kmode));
+  const r=document.getElementById("root").value||"C", sc=document.getElementById("scale").value||"major", k=document.getElementById("key").value||"C";
+  sel("root", ROOT_OPTS.map(x=>[x,N(x)]), r);
+  sel("scale", Object.entries(SCALES).map(([k,v])=>[k,v.name]), sc);
+  sel("key", ROOT_OPTS.map(x=>[x,N(x)]), k);
+  document.getElementById("tuning").textContent = ["E","A","D","G","B","E"].map(N).join(" – ");
+  fretboard(); intervals(); chordTable(); harmony(); circle();
+}
+document.getElementById("nota").onclick=e=>{ if(e.target.dataset.v){ nota=e.target.dataset.v; try{localStorage.setItem("cf-nota",nota);}catch(_){} all(); } };
+document.getElementById("kmode").onclick=e=>{ if(e.target.dataset.v){ kmode=e.target.dataset.v; all(); } };
+["root","scale","all"].forEach(id=>document.getElementById(id).onchange=fretboard);
+document.getElementById("key").onchange=harmony;
+all();
+</script>
+</body></html>

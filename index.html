@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="it"><head><meta charset="utf-8"><title>ChordForge</title>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ChordForge</title>
+<link rel="stylesheet" href="style.css">
 <style>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
@@ -9,6 +10,13 @@ body { margin:0; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif
 #ui input[type=text] { width: 48%; padding:6px; font-size:14px; }
 #ui button { font-size:15px; padding:8px 16px; margin-top:8px; cursor:pointer; }
 #ui .hint { color:#555; font-size:13px; }
+#dgpanel { display:none; margin-top:12px; border-top:1px solid #ddd; padding-top:10px; }
+#dgpanel .grid, .dgs { display:flex; flex-wrap:wrap; gap:6px 10px; }
+.dgi { text-align:center; font-family:-apple-system,Arial,sans-serif; }
+.dgi .n { font-weight:800; font-size:14px; }
+.dgi .b { font-size:10px; color:#555; }
+#dgpanel .dgi a { color:#111; text-decoration:none; }
+.sec.dgsec { break-inside: avoid; }
 #ctl { display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin:10px 0; font-size:15px; }
 #ctl button { margin:0; padding:4px 12px; font-size:16px; }
 #ctl b#sz { display:inline-block; min-width:64px; text-align:center; }
@@ -31,6 +39,8 @@ pre { margin:0; font-family: Menlo, "Courier New", monospace; white-space: pre; 
   .page:last-child { page-break-after: auto; }
 }
 </style></head><body>
+<nav class="cf-nav"><a class="brand" href="index.html">Chord<span>Forge</span></a>
+  <a class="lnk on" href="index.html">Spartito</a><a class="lnk" href="accordi.html">Prontuario accordi</a><a class="lnk" href="teoria.html">Teoria</a></nav>
 <div id="ui">
   <h2 style="margin-top:0">ChordForge <span style="font-weight:400;color:#666;font-size:15px">· testo e accordi pronti da stampare</span></h2>
   <input id="title" type="text" placeholder="Titolo"> <input id="artist" type="text" placeholder="Artista">
@@ -40,15 +50,18 @@ pre { margin:0; font-family: Menlo, "Courier New", monospace; white-space: pre; 
     <span>Colonne: <label><input type="radio" name="cols" value="1"> 1</label> <label><input type="radio" name="cols" value="2" checked> 2</label></span>
     <span>Carattere: <button id="minus">A−</button> <b id="sz">auto</b> <button id="plus">A+</button></span>
     <label><input type="checkbox" id="auto" checked> Automatico (sta in 2 pagine)</label>
+    <label><input type="checkbox" id="dgm"> Stampa anche gli schemi degli accordi</label>
   </div>
-  <button id="go">Impagina</button> <button id="pr">Stampa</button>
+  <button id="go">Impagina</button> <button id="pr">Stampa</button> <button id="showdg">Schemi accordi del brano</button>
   <span id="info" class="hint"></span>
+  <div id="dgpanel"></div>
 </div>
 <div id="out"></div>
 
+<script src="chords.js"></script>
 <script>
 const ROOT = "(?:DO|RE|MI|FA|SOL|LA|SI|[A-G])";
-const CHORD = ROOT + "(?:#|b)?(?:m(?!a)|maj|min|dim|aug|sus|add|M)?\\d*(?:maj\\d*|sus\\d*|add\\d*|b\\d+|#\\d+)*(?:\\/" + ROOT + "(?:#|b)?)?";
+const CHORD = ROOT + "(?:#|b)?(?:m(?!a)|min|-)?(?:maj|Maj|M|Δ)?\\d*(?:sus\\d?|add\\d+|dim\\d?|aug|\\+|°|ø)?\\d*(?:[b#+-]\\d+)*(?:\\([^)\\s]{1,10}\\))?(?:\\/9)?(?:\\/" + ROOT + "(?:#|b)?)?";
 const chordRe = new RegExp("^" + CHORD + "$");
 // un "giro" di accordi dentro una riga incollata: spazi + accordi separati da spazi, seguito da fine, spazio, maiuscola o parentesi
 const runRe = new RegExp("(\\s*(?:" + CHORD + ")(?:\\s+(?:" + CHORD + "))*)(?=$|\\s|[A-Z(\"'])", "g");
@@ -109,7 +122,26 @@ const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
 const TAGS={"Intro":"Intro","Verse":"Strofa","Pre-Chorus":"Pre-ritornello","Chorus":"Ritornello","Post-Chorus":"Post-ritornello","Bridge":"Bridge","Outro":"Outro","Interlude":"Interludio","Solo":"Assolo"};
 const tagIt=t=>t.replace(/^(Pre-Chorus|Post-Chorus|Verse|Chorus|Intro|Bridge|Outro|Interlude|Solo)/,m=>TAGS[m]);
 
+function songChords(secs){
+  const seen=new Set(), out=[];
+  for(const s of secs) for(const l of (s.lines||[])) if(isChordLine(l)) for(const t of l.trim().split(/\s+/))
+    if(chordRe.test(t) && !seen.has(t)){ seen.add(t); out.push(t); }
+  return out;
+}
+function dgItems(names, width, links){
+  return names.map(n=>{ const cv=CF.chordVoicing(n); if(!cv||!cv.v) return "";
+    const note = cv.chord.bass && !cv.bassOk ? `<div class="b">basso: ${esc(cv.chord.bass)}</div>` : "";
+    const inner = `<div class="n">${esc(n)}</div>${CF.diagram(cv.v,{width})}${note}`;
+    return `<div class="dgi">${links?`<a href="accordi.html?c=${encodeURIComponent(n)}" target="_blank">${inner}</a>`:inner}</div>`; }).join("");
+}
+function showDiagrams(){
+  const p=document.getElementById("dgpanel"), names=songChords(parse(document.getElementById("src").value));
+  p.style.display="block";
+  p.innerHTML = names.length ? `<b>Accordi del brano</b> <span class="hint">(clicca un accordo per vedere altre posizioni)</span><div class="grid" style="margin-top:8px">${dgItems(names,78,true)}</div>`
+    : `<span class="hint">Nessun accordo trovato: incolla prima testo e accordi.</span>`;
+}
 function secHTML(s){
+  if(s.html) return `<div class="sec dgsec">${s.html}</div>`;
   const body=s.lines.map(l=> isChordLine(l)&&l.trim() ? `<span class="ch">${esc(l)}</span>` : esc(l)).join("\n");
   return `<div class="sec${s.lines.length>28?" long":""}">${s.tag?`<div class="tag">${esc(tagIt(s.tag))}</div>`:""}<pre>${body}</pre></div>`;
 }
@@ -144,6 +176,7 @@ let manual=12;
 const ncols=()=>+document.querySelector('input[name=cols]:checked').value;
 function run(){
   const secs=parse(document.getElementById("src").value), nc=ncols();
+  if(document.getElementById("dgm").checked){ const names=songChords(secs); if(names.length) secs.push({html:`<div class="tag">Accordi</div><div class="dgs">${dgItems(names,62,false)}</div>`}); }
   let size, r;
   if(document.getElementById("auto").checked){
     size=nc===1?14:12;
@@ -160,6 +193,8 @@ document.getElementById("plus").onclick=()=>step(0.5);
 document.getElementById("minus").onclick=()=>step(-0.5);
 document.querySelectorAll('input[name=cols]').forEach(r=>r.onchange=safeRun);
 document.getElementById("auto").onchange=safeRun;
+document.getElementById("dgm").onchange=safeRun;
+document.getElementById("showdg").onclick=()=>{ try{ showDiagrams(); }catch(e){ document.getElementById("info").textContent=" Errore: "+e.message; } };
 document.getElementById("pr").onclick=()=>{ if(safeRun()) window.print(); };
 </script>
 </body></html>
