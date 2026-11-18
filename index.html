@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Impagina spartito</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+body { margin:0; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background:#e8e8e8; color:#111; }
+#ui { max-width: 900px; margin: 20px auto; background:#fff; padding:16px; border-radius:8px; }
+#ui textarea { width:100%; height:260px; font-family: Menlo, monospace; font-size:12px; }
+#ui input[type=text] { width: 48%; padding:6px; font-size:14px; }
+#ui button { font-size:15px; padding:8px 16px; margin-top:8px; cursor:pointer; }
+#ui .hint { color:#555; font-size:13px; }
+#ctl { display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin:10px 0; font-size:15px; }
+#ctl button { margin:0; padding:4px 12px; font-size:16px; }
+#ctl b#sz { display:inline-block; min-width:64px; text-align:center; }
+#out { display:flex; flex-direction:column; align-items:center; gap:16px; padding-bottom:30px; }
+.page { width:210mm; height:297mm; background:#fff; padding:12mm 12mm 10mm; position:relative; overflow:hidden; box-shadow:0 1px 6px rgba(0,0,0,.25); }
+.cols { height: calc(297mm - 22mm - 6mm); column-count: 2; column-gap: 8mm; column-fill: auto; column-rule: 1px solid #ddd; }
+.page h1 { font-size: 20pt; margin:0 0 1mm; column-span: all; }
+.page .artist { color:#555; margin-bottom: 3mm; column-span: all; font-size: 11pt; }
+.sec { break-inside: avoid; margin-bottom: .9em; }
+.sec.long { break-inside: auto; }
+.tag { font-family: -apple-system, Arial, sans-serif; font-weight:900; text-transform:uppercase; letter-spacing:.05em; font-size:.95em; color:#000; display:inline-block; border-bottom:1.5px solid #000; padding:0 0 1px; margin-bottom:.3em; }
+pre { margin:0; font-family: Menlo, "Courier New", monospace; white-space: pre; line-height:1.22; }
+.ch { font-weight:800; color:#000; }
+.foot { position:absolute; bottom:5mm; left:0; right:0; text-align:center; font-size:8pt; color:#888; }
+@media print {
+  body { background:#fff; }
+  #ui { display:none; }
+  #out { display:block; padding:0; gap:0; }
+  .page { box-shadow:none; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+}
+</style></head><body>
+<div id="ui">
+  <h2 style="margin-top:0">Impagina spartito (testo + accordi) in 2 pagine A4</h2>
+  <input id="title" type="text" placeholder="Titolo"> <input id="artist" type="text" placeholder="Artista">
+  <p class="hint">Incolla qui sotto testo e accordi (le righe degli accordi vanno sopra quelle del testo; le sezioni tra parentesi quadre, es. [Chorus]). Poi premi <b>Impagina</b> e quindi <b>Stampa</b> (in stampa scegli "Margini: nessuno" se il browser lo chiede).</p>
+  <textarea id="src" placeholder="[Verse 1]&#10;Am          Dm&#10;Testo della strofa..."></textarea>
+  <div id="ctl">
+    <span>Colonne: <label><input type="radio" name="cols" value="1"> 1</label> <label><input type="radio" name="cols" value="2" checked> 2</label></span>
+    <span>Carattere: <button id="minus">A−</button> <b id="sz">auto</b> <button id="plus">A+</button></span>
+    <label><input type="checkbox" id="auto" checked> Automatico (sta in 2 pagine)</label>
+  </div>
+  <button id="go">Impagina</button> <button id="pr">Stampa</button>
+  <span id="info" class="hint"></span>
+</div>
+<div id="out"></div>
+
+<script>
+const ROOT = "(?:DO|RE|MI|FA|SOL|LA|SI|[A-G])";
+const CHORD = ROOT + "(?:#|b)?(?:m(?!a)|maj|min|dim|aug|sus|add|M)?\\d*(?:maj\\d*|sus\\d*|add\\d*|b\\d+|#\\d+)*(?:\\/" + ROOT + "(?:#|b)?)?";
+const chordRe = new RegExp("^" + CHORD + "$");
+// un "giro" di accordi dentro una riga incollata: spazi + accordi separati da spazi, seguito da fine, spazio, maiuscola o parentesi
+const runRe = new RegExp("(\\s*(?:" + CHORD + ")(?:\\s+(?:" + CHORD + "))*)(?=$|\\s|[A-Z(\"'])", "g");
+
+function isChordLine(l){ const t=l.trim().split(/\s+/).filter(Boolean); return t.length>0 && t.every(x=>chordRe.test(x)||x==="|"||/^x\d$/.test(x)||x==="N.C."); }
+
+function splitMerged(line){
+  // separa righe fuse tipo "testo   LAm   REmAltro testo" in righe accordi / righe testo
+  const out=[]; let rest=line, afterChord=false;
+  while(rest.length){
+    runRe.lastIndex=0; let m, found=null;
+    while((m=runRe.exec(rest))){
+      if(m[0].trim()===""){ runRe.lastIndex=m.index+1; continue; }
+      const lead=m[1].match(/^\s*/)[0].length, at=m.index+lead, prev=rest[at-1];
+      const before=rest.slice(0,m.index);
+      const okStart = at===0 ? !afterChord : before.trim()==="" && !afterChord;
+      const okSpace = at>0 && /\s/.test(prev) && lead>=2;
+      const okGlued = at>0 && /[a-z.,!?)'"]/.test(prev) && /^(\s|$)/.test(rest.slice(m.index+m[0].length));
+      if(okStart||okSpace||okGlued){ found={start:m.index,end:m.index+m[0].length}; break; }
+      runRe.lastIndex=m.index+1;
+    }
+    if(!found){ out.push(rest.replace(/\s+$/,"")); break; }
+    const before=rest.slice(0,found.start), seg=rest.slice(found.start,found.end);
+    if(before.trim()){ out.push(before.replace(/\s+$/,"")); out.push(seg.replace(/\s+$/,"")); }
+    else out.push((before+seg).replace(/\s+$/,""));
+    rest=rest.slice(found.end).replace(/^ /,""); afterChord=true;
+    if(!rest.trim()) break;
+  }
+  return out.filter((l,i)=>l.trim()||i>0);
+}
+
+function parse(text){
+  text=text.replace(/\r/g,"").replace(/```/g,"\n")
+    .replace(/Page \d+\/\d+/g,"\n")
+    .replace(/\s*(\[[^\]\n]{1,30}\])/g,"\n$1\n");
+  let lines=[];
+  for(const raw of text.split("\n")){
+    if(/https?:\/\//.test(raw)) continue;
+    if(raw.trim()===""){ lines.push(""); continue; }
+    if(isChordLine(raw)){ lines.push(raw.replace(/\s+$/,"")); continue; }
+    lines.push(...splitMerged(raw));
+  }
+  // sezioni
+  const secs=[]; let cur={tag:null,lines:[]};
+  for(const l of lines){
+    const m=l.trim().match(/^\[(.+)\]$/);
+    if(m){ if(cur.tag||cur.lines.some(x=>x.trim())) secs.push(cur); cur={tag:m[1],lines:[]}; }
+    else cur.lines.push(l);
+  }
+  secs.push(cur);
+  secs.forEach(s=>{ while(s.lines.length&&!s.lines[0].trim()) s.lines.shift(); while(s.lines.length&&!s.lines.at(-1).trim()) s.lines.pop();
+    // togli righe vuote multiple
+    s.lines=s.lines.filter((l,i,a)=>l.trim()||(a[i-1]||"").trim()); });
+  return secs.filter(s=>s.tag||s.lines.length);
+}
+
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const TAGS={"Intro":"Intro","Verse":"Strofa","Pre-Chorus":"Pre-ritornello","Chorus":"Ritornello","Post-Chorus":"Post-ritornello","Bridge":"Bridge","Outro":"Outro","Interlude":"Interludio","Solo":"Assolo"};
+const tagIt=t=>t.replace(/^(Pre-Chorus|Post-Chorus|Verse|Chorus|Intro|Bridge|Outro|Interlude|Solo)/,m=>TAGS[m]);
+
+function secHTML(s){
+  const body=s.lines.map(l=> isChordLine(l)&&l.trim() ? `<span class="ch">${esc(l)}</span>` : esc(l)).join("\n");
+  return `<div class="sec${s.lines.length>28?" long":""}">${s.tag?`<div class="tag">${esc(tagIt(s.tag))}</div>`:""}<pre>${body}</pre></div>`;
+}
+
+function newPage(n, head){
+  const p=document.createElement("div"); p.className="page";
+  p.innerHTML=`<div class="cols">${head||""}</div><div class="foot">${esc(document.getElementById("title").value||"")} · pagina ${n}</div>`;
+  return p;
+}
+const overflow=c=> c.scrollWidth > c.clientWidth+2;
+
+function layout(secs, size, ncol){
+  const out=document.getElementById("out"); out.innerHTML="";
+  const t=document.getElementById("title").value, a=document.getElementById("artist").value;
+  const head=(t?`<h1>${esc(t)}</h1>`:"")+(a?`<div class="artist">${esc(a)}</div>`:"");
+  const pages=[newPage(1,head)]; out.appendChild(pages[0]);
+  let cols=pages[0].querySelector(".cols"); cols.style.fontSize=size+"pt"; cols.style.columnCount=ncol;
+  for(const s of secs){
+    cols.insertAdjacentHTML("beforeend", secHTML(s));
+    if(overflow(cols)){
+      const last=cols.lastElementChild; last.remove();
+      const p=newPage(pages.length+1,""); out.appendChild(p); pages.push(p);
+      cols=p.querySelector(".cols"); cols.style.fontSize=size+"pt"; cols.style.columnCount=ncol;
+      cols.appendChild(last);
+    }
+  }
+  const okWidth=[...out.querySelectorAll("pre")].every(p=>p.scrollWidth<=p.parentElement.parentElement.clientWidth/ncol+4);
+  return {pages:pages.length, ok: pages.length<=2 && !overflow(cols) && okWidth};
+}
+
+let manual=12;
+const ncols=()=>+document.querySelector('input[name=cols]:checked').value;
+function run(){
+  const secs=parse(document.getElementById("src").value), nc=ncols();
+  let size, r;
+  if(document.getElementById("auto").checked){
+    size=nc===1?14:12;
+    while(size>=6){ r=layout(secs,size,nc); if(r.ok) break; size-=0.25; }
+    manual=size;
+  } else { size=manual; r=layout(secs,size,nc); }
+  document.getElementById("sz").textContent=size.toFixed(1)+" pt";
+  document.getElementById("info").textContent=` → ${r.pages} pagin${r.pages>1?"e":"a"}`+(r.pages>2?" (diminuisci il carattere per stare in 2)":"");
+}
+function safeRun(){ try{ run(); return true; } catch(e){ document.getElementById("info").textContent=" Errore: "+e.message; return false; } }
+document.getElementById("go").onclick=safeRun;
+function step(d){ document.getElementById("auto").checked=false; manual=Math.max(6,Math.min(24,manual+d)); safeRun(); }
+document.getElementById("plus").onclick=()=>step(0.5);
+document.getElementById("minus").onclick=()=>step(-0.5);
+document.querySelectorAll('input[name=cols]').forEach(r=>r.onchange=safeRun);
+document.getElementById("auto").onchange=safeRun;
+document.getElementById("pr").onclick=()=>{ if(safeRun()) window.print(); };
+</script>
+</body></html>
