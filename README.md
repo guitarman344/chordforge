@@ -1,6 +1,9 @@
-# Impagina spartito
+# ChordForge
 
-Pagina web per impaginare testo e accordi di una canzone e stamparli su fogli A4.
+**Forgia i tuoi spartiti.** Pagina web per impaginare testo e accordi di una canzone e stamparli su fogli A4.
+
+## Provalo online
+https://guitarman344.github.io/chordforge/
 
 ## Come si usa
 1. Apri `index.html` in un browser (Chrome, Safari, Firefox).
